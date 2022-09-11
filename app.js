@@ -12,7 +12,7 @@ app.use(express.json())
 app.use(cors())
 dotenv.config();
 
-const mongoClient = new MongoClient("mongodb://localhost:27017")
+const mongoClient = new MongoClient(process.env.MONGO_URI)
 let db
 
 mongoClient.connect().then(() => {
