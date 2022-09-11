@@ -115,7 +115,7 @@ app.post("/login", async (req, res) => {
               userId: usuario._id,
               token
           })
-          return res.status(200).send({token})
+          return res.status(200).send({token, usuario})
       }else{
           // usuário não encontrado (email ou senha incorretos)
           return res.sendStatus(422)
@@ -150,8 +150,10 @@ app.post("/insereregistro", async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace('Bearer ', '')
     const { text, value, flag } = req.body
+    const valor = value.replace(",", ".")
+    
     let time = dayjs().format('DD/MM')
-
+    
     if(!token) return res.sendStatus(401)
     
     const sessao = await db.collection("sessions").findOne({ token })
@@ -163,12 +165,36 @@ app.post("/insereregistro", async (req, res) => {
     })
     
     if(usuario){
-        await db.collection("records").insertOne({ date: time, text, value, flag, iduser: usuario._id })
+        await db.collection("records").insertOne({ date: time, text, valor, flag, iduser: usuario._id })
         return res.status(200).send()
     }else{
         return res.sendStatus(403)
     }
 })
+
+app.delete("/deslogar", async (req, res) => {
+    const { authorization } = req.headers
+    const token = authorization?.replace('Bearer ', '')
+    
+    if(!token) return res.sendStatus(401)
+    
+    const sessao = await db.collection("sessions").findOne({ token })
+
+    if(!sessao) return res.sendStatus(402)
+
+    const usuario = await db.collection("users").findOne({
+        _id: sessao.userId
+    })
+    
+    if(usuario){
+        await db.collection("sessions").deleteMany({userId: usuario._id})
+        return res.status(200).send()
+    }else{
+        return res.sendStatus(403)
+    }
+})
+
+
 
 app.listen(5000, () => {
     console.log("Server is running on port 5000")
@@ -179,4 +205,8 @@ app.listen(5000, () => {
 credenciais válidas
 "email": "nyx@gmail.com",
 "senha": "nyx22"
+
+"email": "thiago@gmail.com",
+"senha": "123456"
+
 */
