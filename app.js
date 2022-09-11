@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId } from "mongodb"
+import { MaxKey, MongoClient, ObjectId } from "mongodb"
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
@@ -44,6 +44,18 @@ const validaLogin = joi.object({
     senha: joi.string()
     .alphanum()
     .pattern(new RegExp('^[a-zA-Z0-9]{3,30}$'))
+    .empty()
+    .required()
+}).options({ abortEarly: false })
+
+const validaInsercaoRegistro = joi.object({
+    text: joi.string()
+    .min(3)
+    .max(30)
+    .empty()
+    .required(),
+
+    value: joi.number()
     .empty()
     .required()
 }).options({ abortEarly: false })
@@ -151,6 +163,14 @@ app.post("/insereregistro", async (req, res) => {
     const token = authorization?.replace('Bearer ', '')
     const { text, value, flag } = req.body
     const valor = value.replace(",", ".")
+    const validador = validaInsercaoRegistro.validate({text, value})
+
+    if(validador.error){
+        console.log(validador.error)
+        res.sendStatus(422)
+        console.log(validador.error)
+        return
+    }
     
     let time = dayjs().format('DD/MM')
     
