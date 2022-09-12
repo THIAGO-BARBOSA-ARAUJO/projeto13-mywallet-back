@@ -1,23 +1,8 @@
-import { MaxKey, MongoClient, ObjectId } from "mongodb"
-import express from "express"
-import cors from "cors"
-import dotenv from "dotenv"
+import db from "../database/db.js"
 import joi from "joi"
 import bcrypt from "bcrypt"
 import { v4 as uuid } from 'uuid';
 import dayjs from "dayjs"
-
-const app = express()
-app.use(express.json())
-app.use(cors())
-dotenv.config();
-
-const mongoClient = new MongoClient(process.env.MONGO_URI)
-let db
-
-mongoClient.connect().then(() => {
-    db = mongoClient.db("MyWallet")
-})
 
 const validaCadastro = joi.object({
     email: joi.string()
@@ -60,7 +45,8 @@ const validaInsercaoRegistro = joi.object({
     .required()
 }).options({ abortEarly: false })
 
-app.post("/cadastro", async (req, res) => {
+
+const cadastrar = async (req, res) => {
     const { email, senha, nome } = req.body
 
     const validador = validaCadastro.validate(req.body)
@@ -91,9 +77,9 @@ app.post("/cadastro", async (req, res) => {
     db.collection("users").insertOne({email, senha: hashDaSenha, nome});
     return res.sendStatus(201)
     
-})
+}
 
-app.post("/login", async (req, res) => {
+const login = async (req, res) => {
     const { email, senha } = req.body  
 
     const validador = validaLogin.validate(req.body)
@@ -132,9 +118,9 @@ app.post("/login", async (req, res) => {
           // usuário não encontrado (email ou senha incorretos)
           return res.sendStatus(422)
       }
-})
+}
 
-app.get("/registros", async (req, res) => {
+const registros = async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace('Bearer ', '')
     
@@ -156,9 +142,9 @@ app.get("/registros", async (req, res) => {
     }else{
         return res.sendStatus(401)
     }
-})
+}
 
-app.post("/insereregistro", async (req, res) => {
+const insereregistro = async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace('Bearer ', '')
     const { text, value, flag } = req.body
@@ -190,9 +176,9 @@ app.post("/insereregistro", async (req, res) => {
     }else{
         return res.sendStatus(403)
     }
-})
+}
 
-app.delete("/deslogar", async (req, res) => {
+const deslogar = async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace('Bearer ', '')
     
@@ -212,21 +198,6 @@ app.delete("/deslogar", async (req, res) => {
     }else{
         return res.sendStatus(403)
     }
-})
+}
 
-
-
-app.listen(5000, () => {
-    console.log("Server is running on port 5000")
-})
-
-
-/*
-credenciais válidas
-"email": "nyx@gmail.com",
-"senha": "nyx22"
-
-"email": "thiago@gmail.com",
-"senha": "123456"
-
-*/
+export {cadastrar, login, registros, insereregistro, deslogar}
